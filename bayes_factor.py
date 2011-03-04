@@ -62,14 +62,33 @@ def beta_binomial_gammaln(k, n, a, b):
     return np.exp((tmp0 + tmp1 + tmp2).sum(0))
 
 
+def a_from_sigma(sigma):
+    """Compute the parameter a of a Beta distribution given mu=1/2 and
+    sigma.
+    """
+    a = 1.0/(8.0*(sigma*sigma)) - 0.5
+    return a
+
+
 def H0_sigma_beta_binomial(m, iterations=1e5):
     """H0: population is parametrized via sigma, as suggested in
     Gelman 2006.
     """
     mu = 0.5
     sigma = np.random.uniform(low=0, high=0.5, size=iterations)
-    a = 1.0/(8.0*(sigma*sigma)) - 0.5
-    return a
+    a = a_from_sigma(sigma)
+    return a, sigma
+
+
+def a_b_from_mu_sigma(mu, sigma):
+    """Compute the parameters (a, b) of a Beta distribution given
+    mu and sigma.
+    """
+    mu2 = mu*mu
+    sigma2 = sigma*sigma
+    a = mu*(-mu2 + mu - sigma2)/sigma2
+    b = mu * (mu2 - 2*mu + sigma2 + 1) / sigma2 - 1
+    return a, b
 
 
 def H1_sigma_beta_binomial(m, iterations=1e5):
@@ -78,11 +97,8 @@ def H1_sigma_beta_binomial(m, iterations=1e5):
     mu = np.random.uniform(low=0, high=0.5, size=iterations)
     sigma_upper = np.sqrt(mu*(1.0-mu))
     sigma = np.random.uniform(low=0.0, high=sigma_upper, size=iterations)
-    mu2 = mu*mu
-    sigma2 = sigma*sigma
-    a = mu*(-mu2 + mu - sigma2)/sigma2
-    b = mu * (mu2 - 2*mu + sigma2 + 1) / sigma2 - 1
-    return a, b
+    a, b = a_b_from_mu_sigma(mu, sigma)
+    return a, b, mu, sigma
 
 
 def bayes_factor(errors, m, iterations):
@@ -90,14 +106,14 @@ def bayes_factor(errors, m, iterations):
     """
     N = len(errors)
 
-    a = H0_sigma_beta_binomial(m=m, iterations=iterations)
-    p_errors_given_H0 = beta_binomial_gammaln(errors[:,None], m, a, a).mean()
+    a, sigma0 = H0_sigma_beta_binomial(m=m, iterations=iterations)
+    p_errors_given_H0 = beta_binomial_gammaln(errors[:,None], m, a, a)
     
-    a,b = H1_sigma_beta_binomial(m=m, iterations=iterations)
-    p_errors_given_H1 = beta_binomial_gammaln(errors[:,None], m, a, b).mean()
+    a, b, mu1, sigma1 = H1_sigma_beta_binomial(m=m, iterations=iterations)
+    p_errors_given_H1 = beta_binomial_gammaln(errors[:,None], m, a, b)
 
-    B_10 = p_errors_given_H1 / p_errors_given_H0
-    return B_10, p_errors_given_H1, p_errors_given_H0
+    B_10 = p_errors_given_H1.mean() / p_errors_given_H0.mean()
+    return B_10, p_errors_given_H1, p_errors_given_H0, sigma0, mu1, sigma1
 
 
 if __name__=='__main__':
@@ -108,11 +124,11 @@ if __name__=='__main__':
     m = 108
     errors = np.array([43, 59, 51, 38, 39, 53, 47, 50, 50, 59, 59, 45, 36, 46, 53])
 
-    B_10, p_errors_given_H1, p_errors_given_H0 = bayes_factor(errors, m, iterations)
+    B_10, p_errors_given_H1, p_errors_given_H0, a0, a1, b1 = bayes_factor(errors, m, iterations)
     print "Observed errors:", errors
     print "Beta-binomial hierarchical model:"
     print "\t Simple Monte Carlo, iterations =", iterations
-    print "\t p(errors|H0) =", p_errors_given_H0
-    print "\t p(errors|H1) =", p_errors_given_H1
+    print "\t p(errors|H0) =", p_errors_given_H0.mean()
+    print "\t p(errors|H1) =", p_errors_given_H1.mean()
     print "\t B_10 =", B_10
     
