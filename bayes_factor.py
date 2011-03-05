@@ -105,8 +105,6 @@ def H1_sigma_beta_binomial(m, iterations=1e5):
 def bayes_factor(errors, m, iterations):
     """Compute Bayes factor.
     """
-    N = len(errors)
-
     a, sigma0 = H0_sigma_beta_binomial(m=m, iterations=iterations)
     p_errors_given_H0 = beta_binomial_gammaln(errors[:,None], m, a, a)
     
