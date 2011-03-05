@@ -33,7 +33,8 @@ def beta_binomial(k, n, a, b):
     Computation based on beta function.
 
     See: http://en.wikipedia.org/wiki/Beta-binomial_distribution
-
+    and http://mathworld.wolfram.com/BetaBinomialDistribution.html
+    
     k = a vector of non-negative integers <= n
     n = an integer
     a = an array of non-negative real numbers
@@ -43,8 +44,8 @@ def beta_binomial(k, n, a, b):
 
 
 def beta_binomial_gammaln(k, n, a, b):
-    """The log of the pmf/pdf of the Beta-binomial distribution.
-    Computation based on gammaln function.
+    """The pmf of the Beta-binomial distribution. Computation based
+    on gammaln function.
 
     Note: this implementation suffers much less the numerical issues
     of beta_binomial().
