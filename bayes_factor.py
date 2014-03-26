@@ -105,11 +105,13 @@ def H1_sigma_beta_binomial(m, iterations=1e5):
 def bayes_factor(errors, m, iterations):
     """Compute Bayes factor.
     """
+    m = np.atleast_1d(m)
+    
     a, sigma0 = H0_sigma_beta_binomial(m=m, iterations=iterations)
-    p_errors_given_H0 = beta_binomial_gammaln(errors[:,None], m, a, a)
+    p_errors_given_H0 = beta_binomial_gammaln(errors[:,None], m[:,None], a, a)
     
     a, b, mu1, sigma1 = H1_sigma_beta_binomial(m=m, iterations=iterations)
-    p_errors_given_H1 = beta_binomial_gammaln(errors[:,None], m, a, b)
+    p_errors_given_H1 = beta_binomial_gammaln(errors[:,None], m[:,None], a, b)
 
     B_10 = p_errors_given_H1.mean() / p_errors_given_H0.mean()
     return B_10, p_errors_given_H1, p_errors_given_H0, sigma0, mu1, sigma1
@@ -120,7 +122,8 @@ if __name__=='__main__':
     iterations = 1e5
 
     N = 15
-    m = 108
+    # m = 108
+    m = np.ones(N) * 108 # Note, m can be different from subject to subejct.
     errors = np.array([43, 59, 51, 38, 39, 53, 47, 50, 50, 59, 59, 45, 36, 46, 53])
 
     B_10, p_errors_given_H1, p_errors_given_H0, a0, a1, b1 = bayes_factor(errors, m, iterations)
